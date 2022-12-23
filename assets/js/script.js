@@ -24,23 +24,24 @@ function init() {
     getWeather(e);
   });
 
+  //Capture the click of the clear history button
   clearButton.on('click', function(e){
     clearHistory();
   });
 }
 
+//Get data from API
 function getWeather(event) {
 
   var searchText = "";
-  //Check the trigger - search button or historic search button
+  //Check the trigger - search button or historic search button and get the town name
   if (event.type == "submit") {
-    searchText = searchInput.val(); //.toLowerCase().trim();
+    searchText = searchInput.val();
   } else if (event.type == "click") {
     searchText = event.target.innerText;
   }
   
-  
-    
+  //Check if there is a town name provided, request the data from the API and call functions to display it
   if (searchText) {      
     
     $.get(`https://api.openweathermap.org/data/2.5/weather?q=${searchText}&appid=${apiKey}&units=metric`)
@@ -63,15 +64,17 @@ function getWeather(event) {
   }
 }
 
+//Add the current weather section to the top of the page
 function displayCurrentWeather (currentData) {
 
   todaySection.html("");
   todaySection.removeClass('hide');
   fiveday.removeClass('hide');
   
+  //Show on the page the section to display the current weather
   todaySection.append(`
-    <h3 class="inline">${currentData.name} (${todayDate.format("dddd, DD MMM")})</h3>
-    <img class="inline" src="https://openweathermap.org/img/w/${currentData.weather[0].icon}.png" alt="">
+    <h3 class="inline">${currentData.name} (${todayDate.format("dddd, DD MMMM")})</h3>
+    <img class="inline" src="https://openweathermap.org/img/w/${currentData.weather[0].icon}.png" alt="${currentData.weather[0].description}" title="${currentData.weather[0].description}">
     <p>Temp: ${Math.round(currentData.main.temp)}&deg C</p>
     <p>Wind: ${currentData.wind.speed} m/s</p>
     <p>Humidity: ${currentData.main.humidity}%</p>
@@ -79,31 +82,30 @@ function displayCurrentWeather (currentData) {
 
 }
 
+//Add the five cards on the page with forecast for the next five days
 function displayForecastWeather(forecastData) {
-  cardWrapper.html("");
 
-  //console.log("Current date: " + todayDate.format("DD"));
+  cardWrapper.html("");
 
   var lastForecastObj = null;
   var numNoonForecast = 0;
   var forecastMoment = null;
 
+  //Loop through the results for the next 5 days
   for (var forecastObj of forecastData.list) {
     
-    //console.log(forecastMoment.format("DD MMM HH"));
     forecastMoment = moment.unix(forecastObj.dt);
     lastForecastObj = forecastObj;
 
     //Filter results for the next 5 days forecast at 12 noon
     if (forecastMoment.format("DD") > todayDate.format("DD") && forecastMoment.format("HH") == "12"){
-      //console.log("inside: " + forecastMoment.format("DD MMM HH"));
 
       numNoonForecast++;
 
       cardWrapper.append(`
       <div class="weather-card">
-        <h5>${forecastMoment.format("dddd, DD MMM")}</h3>
-        <img class="inline" src="https://openweathermap.org/img/w/${forecastObj.weather[0].icon}.png" alt="">
+        <h5>${forecastMoment.format("ddd, DD MMM")}</h3>
+        <img class="inline" src="https://openweathermap.org/img/w/${forecastObj.weather[0].icon}.png" alt="${forecastObj.weather[0].description}" title="${forecastObj.weather[0].description}">
         <p>Temp: ${Math.round(forecastObj.main.temp)}&deg C</p>
         <p>Wind: ${forecastObj.wind.speed} m/s</p>
         <p>Humidity: ${forecastObj.main.humidity}%</p>
@@ -118,8 +120,8 @@ function displayForecastWeather(forecastData) {
     forecastMoment = moment.unix(lastForecastObj.dt);
     cardWrapper.append(`
     <div class="weather-card">
-      <h5>${forecastMoment.format("dddd, DD MMM")}</h3>
-      <img class="inline" src="https://openweathermap.org/img/w/${lastForecastObj.weather[0].icon}.png" alt="">
+      <h5>${forecastMoment.format("ddd, DD MMM")}</h3>
+      <img class="inline" src="https://openweathermap.org/img/w/${lastForecastObj.weather[0].icon}.png" alt="${lastForecastObj.weather[0].description}" title="${lastForecastObj.weather[0].description}">
       <p>Temp: ${Math.round(lastForecastObj.main.temp)}&deg C</p>
       <p>Wind: ${lastForecastObj.wind.speed} m/s</p>
       <p>Humidity: ${lastForecastObj.main.humidity}%</p>
@@ -129,6 +131,7 @@ function displayForecastWeather(forecastData) {
 
 }
 
+//Display buttons on the left-hand-side of the page for previous searches
 function displayHistoricSearches(){
   var searchesStorageArr = JSON.parse(localStorage.getItem('weathersearches'));
   
@@ -147,18 +150,16 @@ function displayHistoricSearches(){
 
 }
 
+//Save searches in local storage and call the function to update the search buttons
 function saveSearchHistory(searchText) {
-  //console.log(searchText);
   
   var searchesStorageArr = JSON.parse(localStorage.getItem('weathersearches'));
   var exists = false;
-  //console.log("Local storage: " + searchesStorageArr);
 
   if (searchesStorageArr != null) {
     //Check if this search already exists in the history list
     for (var historicSearchText of searchesStorageArr) {
       if (searchText.toLowerCase().trim() == historicSearchText.toLowerCase().trim()){
-        //console.log('Item already in search list');
         exists = true;
       }    
     }
@@ -174,9 +175,11 @@ function saveSearchHistory(searchText) {
   displayHistoricSearches()
 }
 
+//Clear the local storage with historic searches and refresh the page
 function clearHistory() {
   localStorage.clear();
   location.href = 'index.html';
 }
 
+//Run once the page is loaded
 init();
